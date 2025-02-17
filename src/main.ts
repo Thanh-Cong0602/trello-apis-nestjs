@@ -6,7 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 3000;
-
+  app.setGlobalPrefix('v1', { exclude: [''] });
   await app.listen(port ?? 3000);
 }
 
