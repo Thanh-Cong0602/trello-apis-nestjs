@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { pagingSkipValue } from '~/utils/algorithms';
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '~/utils/constants';
 import { slugify } from '~/utils/formatters';
+import { ColumnDto } from '../column/dto/column.dto';
 import { BoardDto } from './dto/board.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { ListBoardsDto } from './dto/list-boards.dto';
@@ -76,5 +77,21 @@ export class BoardService {
       boards: results.queryBoards || [],
       totalBoards: results.queryTotalBoards[0]?.countAllBoards || 0
     };
+  }
+
+  async pushColumnOrderIds(column: ColumnDto) {
+    return await this.boardModel.findOneAndUpdate(
+      { _id: column.boardId },
+      { $push: { columnOrderIds: column._id } },
+      { returnDocument: 'after' }
+    );
+  }
+
+  async pullColumnOrderIds(column: ColumnDto) {
+    return await this.boardModel.findOneAndUpdate(
+      { _id: column.boardId },
+      { $pull: { columnOrderIds: column._id } },
+      { returnDocument: 'after' }
+    );
   }
 }
