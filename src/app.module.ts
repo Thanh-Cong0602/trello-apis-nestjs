@@ -1,12 +1,14 @@
-/* eslint-disable @typescript-eslint/require-await */
-
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from '~/auth/auth.module';
+import { JwtAuthGuard } from '~/auth/passport/jwt-auth.guard';
 import { BoardModule } from '~/modules/board/board.module';
 import { CardModule } from '~/modules/card/card.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -20,9 +22,17 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         dbName: configService.get<string>('MONGODB_NAME')
       }),
       inject: [ConfigService]
-    })
+    }),
+    UserModule,
+    AuthModule
   ],
   controllers: [AppController],
-  providers: [AppService]
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard
+    }
+  ]
 })
 export class AppModule {}

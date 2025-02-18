@@ -7,23 +7,35 @@ import {
   Param,
   Post,
   Put,
-  Query
+  Query,
+  Req,
+  UseGuards
 } from '@nestjs/common';
+import { Request } from 'express';
+import { AuthService } from '~/auth/auth.service';
+import { JwtAuthGuard } from '~/auth/passport/jwt-auth.guard';
+import { Public } from '~/decorator/customize';
 import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 
 @Controller('board')
 export class BoardController {
-  constructor(private readonly boardService: BoardService) {}
+  constructor(
+    private readonly boardService: BoardService,
+    private readonly authService: AuthService
+  ) {}
 
   @Post()
+  @Public()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createBoardDto: CreateBoardDto) {
-    const userId = '650f7a9b9b0c6200dcaebfad';
-    return this.boardService.create(userId, createBoardDto);
+  create(@Req() req: Request, @Body() createBoardDto: CreateBoardDto) {
+    const { _id } = this.authService.getUserFromToken(req);
+
+    return this.boardService.create(_id, createBoardDto);
   }
 
+  @UseGuards(JwtAuthGuard) // 🔒 Private API
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   findOneById(@Param('id') boardId: string) {
@@ -36,10 +48,15 @@ export class BoardController {
     return this.boardService.update(id, updateBoardDto);
   }
 
+  @UseGuards(JwtAuthGuard) // 🔒 Private API
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  getBoards(@Query('page') page: number, @Query('itemPerPage') itemPerPage: number) {
-    const userId = '650f7a9b9b0c6200dcaebfad';
+  getBoards(
+    @Req() req: Request,
+    @Query('page') page: number,
+    @Query('itemPerPage') itemPerPage: number
+  ) {
+    const { _id: userId } = this.authService.getUserFromToken(req);
     return this.boardService.getBoards(userId, page, itemPerPage);
   }
 }
