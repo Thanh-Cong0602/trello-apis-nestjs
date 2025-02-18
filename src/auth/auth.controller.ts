@@ -1,0 +1,85 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+import ms from 'ms';
+import { Public } from '~/decorator/customize';
+import { UserDto } from '~/modules/user/dto/user.dto';
+import { AuthService } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
+import { JwtAuthGuard } from './passport/jwt-auth.guard';
+import { LocalAuthGuard } from './passport/local-auth.guard';
+
+@Controller('users')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Post('login')
+  @UseGuards(LocalAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  login(@Req() req: Request & { user: UserDto }, @Res() res: Response) {
+    const { accessToken, refreshToken, ...userData } = this.authService.login(req.user);
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    });
+    return res.json(userData);
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  register(@Body() registerAuthDto: RegisterDto) {
+    return this.authService.register(registerAuthDto);
+  }
+
+  @UseGuards(JwtAuthGuard) // 🔒 Private API
+  @Delete('logout')
+  @HttpCode(HttpStatus.OK)
+  logout(@Res() res: Response) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    return res.json({ message: 'Logged out successfully' });
+  }
+
+  @Get('refreshToken')
+  @HttpCode(HttpStatus.OK)
+  refreshToken(@Req() req: Request, @Res() res: Response) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const { accessToken, refreshToken } = this.authService.refreshToken(req.cookies?.refreshToken);
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: ms('14 days')
+    });
+
+    return res.json({ accessToken, refreshToken });
+  }
+}

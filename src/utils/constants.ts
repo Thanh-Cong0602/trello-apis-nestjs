@@ -3,6 +3,11 @@ export const BOARD_TYPES = {
   PRIVATE: 'private'
 };
 
+export const USERS_ROLES = {
+  CLIENT: 'client',
+  ADMIN: 'admin'
+};
+
 export const BOARD_TYPES_VALUES = Object.values(BOARD_TYPES);
 
 export const DEFAULT_PAGE = 1;
