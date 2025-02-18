@@ -9,6 +9,7 @@ import { CardModule } from '~/modules/card/card.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
+import { ColumnModule } from './modules/column/column.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { UserModule } from './modules/user/user.module';
       inject: [ConfigService]
     }),
     UserModule,
-    AuthModule
+    AuthModule,
+    ColumnModule
   ],
   controllers: [AppController],
   providers: [
