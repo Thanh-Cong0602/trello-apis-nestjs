@@ -8,13 +8,16 @@ import { BoardModule } from '~/modules/board/board.module';
 import { CardModule } from '~/modules/card/card.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './modules/user/user.module';
 import { ColumnModule } from './modules/column/column.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
     BoardModule,
+    ColumnModule,
     CardModule,
+    UserModule,
+    AuthModule,
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -23,10 +26,7 @@ import { ColumnModule } from './modules/column/column.module';
         dbName: configService.get<string>('MONGODB_NAME')
       }),
       inject: [ConfigService]
-    }),
-    UserModule,
-    AuthModule,
-    ColumnModule
+    })
   ],
   controllers: [AppController],
   providers: [

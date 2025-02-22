@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators';
 
 export type BoardDocument = HydratedDocument<Column>;
@@ -9,13 +9,11 @@ export class Column {
   @Prop({
     required: true,
     validate: {
-      validator: (value: string[]) => {
-        return value.every(id => OBJECT_ID_RULE.test(id));
-      },
+      validator: (value: Types.ObjectId) => Types.ObjectId.isValid(value),
       message: OBJECT_ID_RULE_MESSAGE
     }
   })
-  boardId: string;
+  boardId: Types.ObjectId;
 
   @Prop({
     required: true,
@@ -26,21 +24,18 @@ export class Column {
   title: string;
 
   @Prop({
-    type: [String],
+    type: [Types.ObjectId],
     default: [],
     validate: {
-      validator: (value: string[]) => {
-        return value.every(id => OBJECT_ID_RULE.test(id));
+      validator: (value: Types.ObjectId[]) => {
+        return value.every(id => OBJECT_ID_RULE.test(id.toString()));
       },
       message: OBJECT_ID_RULE_MESSAGE
     }
   })
-  cardOrderIds: string[];
+  cardOrderIds: Types.ObjectId[];
 
-  @Prop({
-    type: Boolean,
-    default: false
-  })
+  @Prop({ default: false })
   _destroy: boolean;
 }
 
