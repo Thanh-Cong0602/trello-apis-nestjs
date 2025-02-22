@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { USERS_ROLES } from '~/utils/constants';
 import { EMAIL_RULE, EMAIL_RULE_MESSAGE } from '~/utils/validators';
 
@@ -10,16 +10,11 @@ export class User {
   @Prop({
     required: true,
     unique: true,
-    validate: {
-      validator: (email: string) => EMAIL_RULE.test(email),
-      message: EMAIL_RULE_MESSAGE
-    }
+    match: [EMAIL_RULE, EMAIL_RULE_MESSAGE]
   })
   email: string;
 
-  @Prop({
-    required: true
-  })
+  @Prop({ required: true })
   password: string;
 
   @Prop({
@@ -34,9 +29,7 @@ export class User {
   })
   displayName: string;
 
-  @Prop({
-    default: null
-  })
+  @Prop({ default: null })
   avatar: string;
 
   @Prop({
@@ -46,29 +39,19 @@ export class User {
   })
   role: string;
 
-  @Prop({
-    default: false
-  })
+  @Prop({ default: false })
   isActive: boolean;
 
   @Prop()
   verifyToken: string;
 
-  @Prop()
-  createdAt: Date;
-
-  @Prop()
-  updatedAt: Date;
-
-  @Prop({
-    default: false
-  })
+  @Prop({ default: false })
   _destroy: boolean;
 
-  private _id: string;
+  private _id: Types.ObjectId;
 
-  get id(): string {
-    return this._id.toString();
+  get id(): Types.ObjectId {
+    return this._id;
   }
 }
 

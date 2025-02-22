@@ -4,12 +4,12 @@ import { Model, Types } from 'mongoose';
 import { pagingSkipValue } from '~/utils/algorithms';
 import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '~/utils/constants';
 import { slugify } from '~/utils/formatters';
-import { ColumnDto } from '../column/dto/column.dto';
-import { BoardDto } from './dto/board.dto';
+import { ColumnType } from '../column/types/column.type';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { ListBoardsDto } from './dto/list-boards.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Board } from './schemas/board.schema';
+import { BoardType } from './types/board.type';
+import { ListBoardsType } from './types/list-boards.type';
 
 @Injectable()
 export class BoardService {
@@ -39,7 +39,7 @@ export class BoardService {
     );
   }
 
-  async getBoards(userId: string, page: number, itemPerPage: number): Promise<ListBoardsDto> {
+  async getBoards(userId: string, page: number, itemPerPage: number): Promise<ListBoardsType> {
     if (!page) page = DEFAULT_PAGE;
     if (!itemPerPage) itemPerPage = DEFAULT_ITEMS_PER_PAGE;
     const queryConditions = [
@@ -50,7 +50,7 @@ export class BoardService {
     ];
 
     type AggregatedResult = {
-      queryBoards: BoardDto[];
+      queryBoards: BoardType[];
       queryTotalBoards: { countAllBoards: number }[];
     };
 
@@ -79,7 +79,7 @@ export class BoardService {
     };
   }
 
-  async pushColumnOrderIds(column: ColumnDto) {
+  async pushColumnOrderIds(column: ColumnType) {
     return await this.boardModel.findOneAndUpdate(
       { _id: column.boardId },
       { $push: { columnOrderIds: column._id } },
@@ -87,7 +87,7 @@ export class BoardService {
     );
   }
 
-  async pullColumnOrderIds(column: ColumnDto) {
+  async pullColumnOrderIds(column: ColumnType) {
     return await this.boardModel.findOneAndUpdate(
       { _id: column.boardId },
       { $pull: { columnOrderIds: column._id } },

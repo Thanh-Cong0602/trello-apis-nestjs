@@ -1,5 +1,7 @@
-export type BoardDto = {
-  _id: string;
+import { Types } from 'mongoose';
+
+export type BoardType = {
+  _id: Types.ObjectId;
 
   title: string;
 
@@ -15,9 +17,9 @@ export type BoardDto = {
 
   memberIds: string[];
 
-  createdAt: number;
+  createdAt?: Date | null;
 
-  updatedAt: number | null;
+  updatedAt?: number | null;
 
   _destroy: boolean;
 };

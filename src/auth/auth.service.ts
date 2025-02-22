@@ -8,8 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { Request } from 'express';
-import { UserDto } from '~/modules/user/dto/user.dto';
-import { User } from '~/modules/user/schemas/user.schema';
+import { UserResponseType } from '~/modules/user/types/user.type';
 import { UserMapper } from '~/modules/user/user.mapper';
 import { UserService } from '~/modules/user/user.service';
 import { RegisterDto } from './dto/register.dto';
@@ -23,20 +22,20 @@ export class AuthService {
     private readonly configService: ConfigService
   ) {}
 
-  login(userDto: UserDto) {
-    const userInfo = { _id: userDto._id, email: userDto.email };
+  login(userData: UserResponseType) {
+    const userInfo = { _id: userData._id, email: userData.email };
     return {
       accessToken: this.jwtService.sign(userInfo),
       refreshToken: this.jwtService.sign(userInfo, {
         secret: this.configService.get<string>('REFRESH_TOKEN_SECRET_SIGNATURE'),
         expiresIn: this.configService.get<string>('REFRESH_TOKEN_LIFE')
       }),
-      ...userDto
+      userData
     };
   }
 
-  async validateUser(email: string, password: string): Promise<UserDto | null> {
-    const existUser: User | null = await this.userService.findByEmail(email);
+  async validateUser(email: string, password: string): Promise<UserResponseType | null> {
+    const existUser = await this.userService.findByEmail(email);
 
     if (!existUser) throw new NotFoundException('Account not found!');
 

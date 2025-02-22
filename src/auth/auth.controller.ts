@@ -10,10 +10,11 @@ import {
   Res,
   UseGuards
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import ms from 'ms';
 import { Public } from '~/decorator/customize';
-import { UserDto } from '~/modules/user/dto/user.dto';
+import { UserResponseType } from '~/modules/user/types/user.type';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './passport/jwt-auth.guard';
@@ -21,25 +22,28 @@ import { LocalAuthGuard } from './passport/local-auth.guard';
 
 @Controller('users')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService
+  ) {}
 
   @Public()
   @Post('login')
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
-  login(@Req() req: Request & { user: UserDto }, @Res() res: Response) {
-    const { accessToken, refreshToken, ...userData } = this.authService.login(req.user);
+  login(@Req() req: Request & { user: UserResponseType }, @Res() res: Response) {
+    const { accessToken, refreshToken, userData } = this.authService.login(req.user);
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'none',
+      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      sameSite: this.configService.get<string>('NODE_ENV') === 'production' ? 'none' : 'lax',
       maxAge: ms('14 days')
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'none',
+      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      sameSite: this.configService.get<string>('NODE_ENV') === 'production' ? 'none' : 'lax',
       maxAge: ms('14 days')
     });
     return res.json(userData);
@@ -61,6 +65,7 @@ export class AuthController {
     return res.json({ message: 'Logged out successfully' });
   }
 
+  @Public()
   @Get('refreshToken')
   @HttpCode(HttpStatus.OK)
   refreshToken(@Req() req: Request, @Res() res: Response) {
@@ -68,15 +73,15 @@ export class AuthController {
     const { accessToken, refreshToken } = this.authService.refreshToken(req.cookies?.refreshToken);
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      sameSite: this.configService.get<string>('NODE_ENV') === 'production' ? 'none' : 'lax',
       maxAge: ms('14 days')
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: this.configService.get<string>('NODE_ENV') === 'production',
+      sameSite: this.configService.get<string>('NODE_ENV') === 'production' ? 'none' : 'lax',
       maxAge: ms('14 days')
     });
 

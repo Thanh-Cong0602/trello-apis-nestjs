@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { UserDto } from './dto/user.dto';
-import { User } from './schemas/user.schema';
+import { UserDBType, UserResponseType } from './types/user.type';
 
 @Injectable()
 export class UserMapper {
   constructor() {}
 
-  mapEntityToDto(user: User): UserDto {
+  mapEntityToDto(user: UserDBType): UserResponseType {
     return {
-      _id: user.id,
+      _id: user._id,
       email: user.email,
       username: user.username,
       displayName: user.displayName,

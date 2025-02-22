@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { BOARD_TYPES } from '~/utils/constants';
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators';
 
@@ -32,51 +32,47 @@ export class Board {
 
   @Prop({
     required: true,
-    type: String,
     enum: BOARD_TYPES
   })
   type: string;
 
   @Prop({
-    type: [String],
+    type: [Types.ObjectId],
     default: [],
     validate: {
-      validator: (value: string[]) => {
-        return value.every(id => OBJECT_ID_RULE.test(id));
+      validator: (value: Types.ObjectId[]) => {
+        return value.every(id => OBJECT_ID_RULE.test(id.toString()));
       },
       message: OBJECT_ID_RULE_MESSAGE
     }
   })
-  columnOrderIds: string[];
+  columnOrderIds: Types.ObjectId[];
 
   @Prop({
-    type: [String],
+    type: [Types.ObjectId],
     default: [],
     validate: {
-      validator: (value: string[]) => {
-        return value.every(id => OBJECT_ID_RULE.test(id));
+      validator: (value: Types.ObjectId[]) => {
+        return value.every(id => OBJECT_ID_RULE.test(id.toString()));
       },
       message: OBJECT_ID_RULE_MESSAGE
     }
   })
-  ownerIds: string[];
+  ownerIds: Types.ObjectId[];
 
   @Prop({
-    type: [String],
+    type: [Types.ObjectId],
     default: [],
     validate: {
-      validator: (value: string[]) => {
-        return value.every(id => OBJECT_ID_RULE.test(id));
+      validator: (value: Types.ObjectId[]) => {
+        return value.every(id => OBJECT_ID_RULE.test(id.toString()));
       },
       message: OBJECT_ID_RULE_MESSAGE
     }
   })
-  memberIds: string[];
+  memberIds: Types.ObjectId[];
 
-  @Prop({
-    type: Boolean,
-    default: false
-  })
+  @Prop({ default: false })
   _destroy: boolean;
 }
 
