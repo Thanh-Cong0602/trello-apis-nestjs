@@ -22,7 +22,7 @@ export class ColumnController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createColumnDto: CreateColumnDto) {
-    return this.columnService.create(createColumnDto);
+    return this.columnService.createColumn(createColumnDto);
   }
 
   @UseGuards(JwtAuthGuard) // 🔒 Private API
@@ -31,10 +31,11 @@ export class ColumnController {
   update(@Param('id') id: string, @Body() updateColumnDto: UpdateColumnDto) {
     return this.columnService.update(id, updateColumnDto);
   }
+
   @UseGuards(JwtAuthGuard) // 🔒 Private API
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string) {
-    return this.columnService.remove(id);
+    return this.columnService.removeColumn(id);
   }
 }

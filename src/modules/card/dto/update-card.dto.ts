@@ -1,12 +1,13 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsArray, IsBoolean, IsNumber, IsString, Matches } from 'class-validator';
+import { IsArray, IsNumber, IsString, Matches } from 'class-validator';
+import { Types } from 'mongoose';
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators';
 import { CreateCardDto } from './create-card.dto';
 
-class CommentDto {
+export class CommentDto {
   @IsString()
   @Matches(OBJECT_ID_RULE, { message: OBJECT_ID_RULE_MESSAGE })
-  userId: string;
+  userId: Types.ObjectId;
 
   @IsString()
   userEmail: string;
@@ -26,17 +27,17 @@ class CommentDto {
 
 export class UpdateCardDto extends PartialType(CreateCardDto) {
   @IsString()
-  description: string;
+  description?: string;
 
   @IsString()
-  cover: string;
+  cover?: string;
 
   @IsArray()
-  memberIds: string[];
+  memberIds: Types.ObjectId[];
 
   @IsArray()
   comments: CommentDto[];
 
-  @IsBoolean()
-  _destroy: boolean;
+  @IsString()
+  columnId: Types.ObjectId;
 }

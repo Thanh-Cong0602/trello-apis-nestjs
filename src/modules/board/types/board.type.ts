@@ -11,15 +11,15 @@ export type BoardType = {
 
   type: string;
 
-  columnOrderIds: string[];
+  columnOrderIds: Types.ObjectId[] | [];
 
-  ownerIds: string[];
+  ownerIds: Types.ObjectId[] | [];
 
-  memberIds: string[];
+  memberIds: Types.ObjectId[] | [];
 
-  createdAt?: Date | null;
+  createdAt: Date;
 
-  updatedAt?: number | null;
+  updatedAt: Date;
 
   _destroy: boolean;
 };

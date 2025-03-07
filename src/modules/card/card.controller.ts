@@ -41,6 +41,6 @@ export class CardController {
     @UploadedFile() cardCoverFile?: Express.Multer.File
   ) {
     const userInfo: JwtInfoDto = this.authService.getUserFromToken(req);
-    return this.cardService.update(id, updateCardBody, userInfo, cardCoverFile);
+    return this.cardService.updateCard(id, updateCardBody, userInfo, cardCoverFile);
   }
 }

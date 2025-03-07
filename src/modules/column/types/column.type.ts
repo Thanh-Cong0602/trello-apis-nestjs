@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { CardType } from '~/modules/card/types/card.type';
 
 export type ColumnType = {
   _id: Types.ObjectId;
@@ -9,11 +10,11 @@ export type ColumnType = {
 
   cardOrderIds: Types.ObjectId[];
 
-  cards?: [];
+  createdAt: Date;
 
-  createdAt?: Date | null;
-
-  updatedAt?: Date | null;
+  updatedAt: Date;
 
   _destroy: boolean;
+
+  cards: CardType[];
 };

@@ -18,6 +18,7 @@ import { Public } from '~/decorator/customize';
 import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { MovingCardType } from './types/moving-card.type';
 
 @Controller('boards')
 export class BoardController {
@@ -32,14 +33,27 @@ export class BoardController {
   create(@Req() req: Request, @Body() createBoardDto: CreateBoardDto) {
     const { _id } = this.authService.getUserFromToken(req);
 
-    return this.boardService.create(_id, createBoardDto);
+    return this.boardService.createBoard(_id, createBoardDto);
+  }
+
+  @UseGuards(JwtAuthGuard) // 🔒 Private API
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  getBoards(
+    @Req() req: Request,
+    @Query('page') page: number,
+    @Query('itemPerPage') itemPerPage: number
+  ) {
+    const { _id: userId } = this.authService.getUserFromToken(req);
+    return this.boardService.getBoards(userId, page, itemPerPage);
   }
 
   @UseGuards(JwtAuthGuard) // 🔒 Private API
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOneById(@Param('id') boardId: string) {
-    return this.boardService.findOneById(boardId);
+  getDetails(@Req() req: Request, @Param('id') boardId: string) {
+    const { _id: userId } = this.authService.getUserFromToken(req);
+    return this.boardService.getDetails(userId, boardId);
   }
 
   @Put(':id')
@@ -49,14 +63,9 @@ export class BoardController {
   }
 
   @UseGuards(JwtAuthGuard) // 🔒 Private API
-  @Get(':id')
+  @Put('/supports/moving_card')
   @HttpCode(HttpStatus.OK)
-  getBoards(
-    @Req() req: Request,
-    @Query('page') page: number,
-    @Query('itemPerPage') itemPerPage: number
-  ) {
-    const { _id: userId } = this.authService.getUserFromToken(req);
-    return this.boardService.getBoards(userId, page, itemPerPage);
+  moveCardToDifferentColumn(@Body() movingCard: MovingCardType) {
+    return this.boardService.moveCardToDifferentColumn(movingCard);
   }
 }

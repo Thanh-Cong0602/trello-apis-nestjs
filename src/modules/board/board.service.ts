@@ -1,97 +1,112 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { pagingSkipValue } from '~/utils/algorithms';
-import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '~/utils/constants';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { cloneDeep } from 'lodash';
+import { Types } from 'mongoose';
+import { BaseServiceAbstract } from '~/services/base.abstract.service';
 import { slugify } from '~/utils/formatters';
+import { CardService } from '../card/card.service';
+import { ColumnService } from '../column/column.service';
+import { ColumnDocument } from '../column/schemas/column.schema';
 import { ColumnType } from '../column/types/column.type';
-import { CreateBoardDto } from './dto/create-board.dto';
+import { BoardRepositoryInterface } from '../interfaces/board.interface';
+import { CreateBoardDto, CreateBoardInternalDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { Board } from './schemas/board.schema';
+import { BoardDocument } from './schemas/board.schema';
+import { BoardDetailsType } from './types/board-details.type';
 import { BoardType } from './types/board.type';
 import { ListBoardsType } from './types/list-boards.type';
+import { MovingCardType } from './types/moving-card.type';
 
 @Injectable()
-export class BoardService {
-  @InjectModel(Board.name) private boardModel: Model<Board>;
+export class BoardService extends BaseServiceAbstract<
+  BoardDocument,
+  CreateBoardDto,
+  UpdateBoardDto
+> {
+  constructor(
+    @Inject('BoardRepositoryInterface')
+    private readonly boardRepository: BoardRepositoryInterface,
+    @Inject(forwardRef(() => ColumnService))
+    private readonly columnService: ColumnService,
+    private readonly cardService: CardService
+  ) {
+    super(boardRepository);
+  }
 
-  async create(userId: string, createBoardDto: CreateBoardDto) {
-    const newBoardToAdd = {
+  async createBoard(userId: string, createBoardDto: CreateBoardDto): Promise<BoardDocument> {
+    const newBoardToAdd: CreateBoardInternalDto = {
       ...createBoardDto,
       slug: slugify(createBoardDto.title),
       ownerIds: [new Types.ObjectId(userId)]
     };
 
-    return await this.boardModel.create(newBoardToAdd);
+    return await this.boardRepository.create(newBoardToAdd);
   }
 
-  async findOneById(boardId: string) {
-    const board = await this.boardModel.findOne({ _id: boardId });
-    if (!board) throw new NotFoundException('Board not found!');
-    return board;
-  }
-
-  update(_id: string, _updateBoardDto: UpdateBoardDto) {
-    return this.boardModel.findOneAndUpdate(
-      { _id },
-      { $set: _updateBoardDto },
-      { returnDocument: 'after' }
-    );
+  async findOneById(boardId: string): Promise<BoardDocument | null> {
+    return await this.boardRepository.findOneById(boardId);
   }
 
   async getBoards(userId: string, page: number, itemPerPage: number): Promise<ListBoardsType> {
-    if (!page) page = DEFAULT_PAGE;
-    if (!itemPerPage) itemPerPage = DEFAULT_ITEMS_PER_PAGE;
-    const queryConditions = [
-      { _destroy: false },
-      {
-        $or: [{ ownerIds: { $all: [userId] } }, { memberIds: { $all: [userId] } }]
-      }
-    ];
+    const results = await this.boardRepository.getBoards(userId, page, itemPerPage);
 
-    type AggregatedResult = {
-      queryBoards: BoardType[];
-      queryTotalBoards: { countAllBoards: number }[];
-    };
+    if (!results || !results.length) {
+      return { boards: [], totalBoards: 0 };
+    }
 
-    const query: AggregatedResult[] = await this.boardModel.aggregate(
-      [
-        { $match: { $and: queryConditions } },
-        { $sort: { title: 1 } },
-        {
-          $facet: {
-            queryBoards: [
-              { $skip: pagingSkipValue(page, itemPerPage) },
-              {
-                $limit: itemPerPage
-              }
-            ],
-            queryTotalBoards: [{ $count: 'countAllBoards' }]
-          }
-        }
-      ],
-      { collation: { locale: 'en' } }
-    );
-    const results = query[0];
     return {
-      boards: results.queryBoards || [],
-      totalBoards: results.queryTotalBoards[0]?.countAllBoards || 0
+      boards: results[0].queryBoards,
+      totalBoards: results[0].queryTotalBoards[0]?.countAllBoards
     };
   }
 
-  async pushColumnOrderIds(column: ColumnType) {
-    return await this.boardModel.findOneAndUpdate(
-      { _id: column.boardId },
-      { $push: { columnOrderIds: column._id } },
-      { returnDocument: 'after' }
-    );
+  async getDetails(userId: string, _boardId: string): Promise<BoardDetailsType | null> {
+    const result = await this.boardRepository.getDetails(userId, _boardId);
+
+    if (!result || !result.length) throw new NotFoundException('Board not found!');
+
+    const resBoard = cloneDeep(result[0]);
+
+    resBoard.columns.forEach(column => {
+      if (resBoard.cards) {
+        column.cards = resBoard.cards.filter(card => card.columnId.equals(column._id));
+      } else {
+        column.cards = [];
+      }
+    });
+
+    delete resBoard.cards;
+
+    return resBoard;
   }
 
-  async pullColumnOrderIds(column: ColumnType) {
-    return await this.boardModel.findOneAndUpdate(
-      { _id: column.boardId },
-      { $pull: { columnOrderIds: column._id } },
-      { returnDocument: 'after' }
-    );
+  async pushColumnOrderIds(column: ColumnType): Promise<BoardType | null> {
+    return this.boardRepository.pushColumnOrderIds(column);
+  }
+
+  async pullColumnOrderIds(column: ColumnDocument): Promise<BoardType | null> {
+    return this.boardRepository.pullColumnOrderIds(column);
+  }
+
+  async moveCardToDifferentColumn(reqBody: MovingCardType) {
+    /* Bước 1: Cập nhật mảng cardOrderIds của Column ban đầu chứa nó */
+    await this.columnService.update(reqBody.prevColumnId, {
+      cardOrderIds: reqBody.prevCardOrderIds.map(c => new Types.ObjectId(c))
+    });
+
+    /* Bước 2: Cập nhật mảng cardOrderIds của Column tiếp theo */
+    await this.columnService.update(reqBody.nextColumnId, {
+      cardOrderIds: reqBody.nextCardOrderIds.map(c => new Types.ObjectId(c))
+    });
+
+    /* Bước 3: Cập nhật lại trường ColumnId của cái Card đã kéo */
+    await this.cardService.update(reqBody.currentCardId, {
+      columnId: new Types.ObjectId(reqBody.nextColumnId)
+    });
+
+    return { updateResult: 'Successfully' };
+  }
+
+  async pushMemberIds(_boardId: string, _userId: string): Promise<BoardDocument | null> {
+    return await this.boardRepository.pushMemberIds(_boardId, _userId);
   }
 }

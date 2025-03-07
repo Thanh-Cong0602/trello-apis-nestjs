@@ -1,4 +1,5 @@
 import { IsIn, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { Types } from 'mongoose';
 import { BOARD_TYPES_VALUES } from '~/utils/constants';
 
 export class CreateBoardDto {
@@ -18,4 +19,9 @@ export class CreateBoardDto {
   @IsNotEmpty()
   @IsIn(BOARD_TYPES_VALUES)
   type: string;
+}
+
+export class CreateBoardInternalDto extends CreateBoardDto {
+  slug: string;
+  ownerIds: Types.ObjectId[];
 }

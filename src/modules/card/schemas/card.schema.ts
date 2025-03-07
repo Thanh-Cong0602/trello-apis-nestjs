@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { BaseSchema } from '~/modules/shared/base/base.schema';
 import {
   EMAIL_RULE,
   EMAIL_RULE_MESSAGE,
@@ -9,7 +10,6 @@ import {
 
 export type CardDocument = HydratedDocument<Card>;
 
-@Schema({ timestamps: true }) // Automation add createdAt và updatedAt
 class Comment {
   @Prop({
     validate: {
@@ -39,8 +39,10 @@ class Comment {
   commentedAt: Date;
 }
 
-export class Card {
+@Schema({ timestamps: true }) // Automation add createdAt và updatedAt
+export class Card extends BaseSchema {
   @Prop({
+    type: Types.ObjectId,
     required: true,
     validate: {
       validator: (value: Types.ObjectId) => OBJECT_ID_RULE.test(value.toString()),
@@ -50,6 +52,7 @@ export class Card {
   boardId: Types.ObjectId;
 
   @Prop({
+    type: Types.ObjectId,
     required: true,
     validate: {
       validator: (value: Types.ObjectId) => OBJECT_ID_RULE.test(value.toString()),
@@ -89,9 +92,6 @@ export class Card {
     default: []
   })
   comments: Comment[];
-
-  @Prop({ default: false })
-  _destroy: boolean;
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);

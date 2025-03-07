@@ -48,7 +48,7 @@ export class AuthService {
   }
 
   register(registerAuthDto: RegisterDto) {
-    return this.userService.create(registerAuthDto);
+    return this.userService.createUser(registerAuthDto);
   }
 
   refreshToken(clientRefreshToken: string) {

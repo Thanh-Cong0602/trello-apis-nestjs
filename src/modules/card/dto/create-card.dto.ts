@@ -1,16 +1,25 @@
-import { IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { BadRequestException } from '@nestjs/common';
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { Types } from 'mongoose';
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators';
 
 export class CreateCardDto {
   @IsNotEmpty()
-  @IsString()
-  @Matches(OBJECT_ID_RULE, { message: OBJECT_ID_RULE_MESSAGE })
-  boardId: string;
+  @Transform(({ value }) => {
+    if (typeof value === 'string' && OBJECT_ID_RULE.test(value)) return new Types.ObjectId(value);
+
+    throw new BadRequestException(OBJECT_ID_RULE_MESSAGE);
+  })
+  boardId: Types.ObjectId;
 
   @IsNotEmpty()
-  @IsString()
-  @Matches(OBJECT_ID_RULE, { message: OBJECT_ID_RULE_MESSAGE })
-  columnId: string;
+  @Transform(({ value }) => {
+    if (typeof value === 'string' && OBJECT_ID_RULE.test(value)) return new Types.ObjectId(value);
+
+    throw new BadRequestException(OBJECT_ID_RULE_MESSAGE);
+  })
+  columnId: Types.ObjectId;
 
   @IsNotEmpty()
   @IsString()

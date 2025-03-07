@@ -1,5 +1,7 @@
-export type CommentType = {
-  userId: string;
+import { Types } from 'mongoose';
+
+export type CommentType<T = Types.ObjectId, D = Date> = {
+  userId: T;
 
   userEmail: string;
 
@@ -9,5 +11,5 @@ export type CommentType = {
 
   content: string;
 
-  commentedAt: number;
+  commentedAt: D;
 };

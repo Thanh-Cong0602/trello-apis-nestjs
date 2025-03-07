@@ -1,26 +1,42 @@
 import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Types } from 'mongoose';
+import { CardDocument } from '~/modules/card/schemas/card.schema';
+import { BaseServiceAbstract } from '~/services/base.abstract.service';
 import { BoardService } from '../board/board.service';
 import { CardService } from '../card/card.service';
-import { CreateColumnDto } from './dto/create-column.dto';
+import { CreateColumnDto, CreateColumnInternalDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
-import { Column } from './schemas/column.schema';
+import { ColumnRepositoryInterface } from './interfaces/column.interface';
+import { ColumnDocument } from './schemas/column.schema';
 import { ColumnType } from './types/column.type';
 
 @Injectable()
-export class ColumnService {
-  @InjectModel(Column.name) private columnModel: Model<Column>;
+export class ColumnService extends BaseServiceAbstract<
+  ColumnDocument,
+  CreateColumnDto,
+  UpdateColumnDto
+> {
   constructor(
     private readonly boardService: BoardService,
+
     @Inject(forwardRef(() => CardService))
-    private readonly cardService: CardService
-  ) {}
+    private readonly cardService: CardService,
 
-  async create(createColumnDto: CreateColumnDto) {
-    const createdColumn = await this.columnModel.create(createColumnDto);
+    @Inject('ColumnRepositoryInterface')
+    private readonly columnRepository: ColumnRepositoryInterface
+  ) {
+    super(columnRepository);
+  }
 
-    const getNewColumn = await this.findOneById(createdColumn._id.toString());
+  async createColumn(createColumnDto: CreateColumnDto) {
+    const newColumnToAdd: CreateColumnInternalDto = {
+      ...createColumnDto,
+      boardId: new Types.ObjectId(createColumnDto.boardId)
+    };
+
+    const createdColumn = await this.columnRepository.create(newColumnToAdd);
+
+    const getNewColumn = await this.columnRepository.findOneById(createdColumn._id.toString());
 
     if (getNewColumn) {
       const columnObject: ColumnType = { ...getNewColumn, cards: [] };
@@ -30,26 +46,17 @@ export class ColumnService {
     return getNewColumn;
   }
 
-  async findOneById(_columnId: string) {
-    const column = await this.columnModel.findOne({ _id: _columnId });
-    if (!column) throw new NotFoundException('Column not found!');
-    return column;
-  }
-
   async update(_columnId: string, _updateColumnDto: UpdateColumnDto) {
-    return this.columnModel.findByIdAndUpdate(
-      { _id: _columnId },
-      { $set: _updateColumnDto },
-      { returnDocument: 'after' }
-    );
+    return this.columnRepository.update(_columnId, _updateColumnDto);
   }
 
-  async remove(_columnId: string) {
-    const targetColumn = await this.findOneById(_columnId);
+  async removeColumn(_columnId: string) {
+    const targetColumn = await this.columnRepository.findOneById(_columnId);
+
     if (!targetColumn) throw new NotFoundException('Column not found!');
 
-    /* Xóa Column */
-    await this.deleteOneById(_columnId);
+    /* Delete Column */
+    await this.columnRepository.permanentlyDelete(_columnId);
 
     /* Delete Cards */
     await this.cardService.deleteManyByColumnId(_columnId);
@@ -60,15 +67,7 @@ export class ColumnService {
     return { deleteResult: 'Column and its Cards deleted successfully!' };
   }
 
-  async deleteOneById(_columnId: string) {
-    return this.columnModel.findByIdAndDelete(_columnId);
-  }
-
-  async pushCardOrderIds(_cardId: Types.ObjectId) {
-    await this.columnModel.findOneAndUpdate(
-      { _id: _cardId },
-      { $push: { cardOrderIds: _cardId } },
-      { returnDocument: 'after' }
-    );
+  async pushCardOrderIds(card: CardDocument) {
+    return await this.columnRepository.pushCardOrderIds(card);
   }
 }

@@ -1,12 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { BaseSchema } from '~/modules/shared/base/base.schema';
 import { BOARD_TYPES } from '~/utils/constants';
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators';
 
 export type BoardDocument = HydratedDocument<Board>;
 
 @Schema({ timestamps: true }) // Tự động thêm createdAt và updatedAt
-export class Board {
+export class Board extends BaseSchema {
   @Prop({
     required: true,
     minlength: 3,
@@ -71,9 +72,6 @@ export class Board {
     }
   })
   memberIds: Types.ObjectId[];
-
-  @Prop({ default: false })
-  _destroy: boolean;
 }
 
 export const BoardSchema = SchemaFactory.createForClass(Board);
