@@ -18,7 +18,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
 
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -28,19 +28,20 @@ export class UserController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+    return this.userService.createUser(createUserDto);
   }
 
   @UseGuards(JwtAuthGuard) // 🔒 Private API
   @Put('update')
-  @UseInterceptors(FileInterceptor('userAvatarFile'))
+  @UseInterceptors(FileInterceptor('avatar'))
   @HttpCode(HttpStatus.OK)
   update(
     @Req() req: Request,
-    @Body() updateUserDto: UpdateUserDto,
+    @Body() updateUserDto: Partial<UpdateUserDto>,
     @UploadedFile() userAvatarFile?: Express.Multer.File
   ) {
     const { _id: userId } = this.authService.getUserFromToken(req);
-    return this.userService.update(userId, updateUserDto, userAvatarFile);
+
+    return this.userService.updateUser(userId, updateUserDto, userAvatarFile);
   }
 }

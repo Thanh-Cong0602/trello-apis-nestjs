@@ -10,6 +10,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ColumnModule } from './modules/column/column.module';
 import { UserModule } from './modules/user/user.module';
+import { InvitationsModule } from './modules/invitations/invitations.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { UserModule } from './modules/user/user.module';
         dbName: configService.get<string>('MONGODB_NAME')
       }),
       inject: [ConfigService]
-    })
+    }),
+    InvitationsModule
   ],
   controllers: [AppController],
   providers: [

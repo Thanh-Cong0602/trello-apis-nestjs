@@ -1,26 +1,26 @@
 import { Types } from 'mongoose';
 import { CommentType } from './comment.type';
 
-export type CardType<T = string, D = number> = {
+export type CardType<T = Types.ObjectId, D = Date> = {
   _id: T;
 
-  boardId: Types.ObjectId;
+  boardId: T;
 
-  columnId: Types.ObjectId;
+  columnId: T;
 
   title: string;
 
   description?: string;
 
-  cover: string | null;
+  cover?: string;
 
-  memberIds: Types.ObjectId[] | [];
+  memberId: T[] | [];
 
-  comments?: CommentType[] | [];
+  createdAt: D;
 
-  createdAt?: D | null;
-
-  updatedAt?: D | null;
+  updatedAt: D;
 
   _destroy: boolean;
+
+  comments?: CommentType<T, D>;
 };

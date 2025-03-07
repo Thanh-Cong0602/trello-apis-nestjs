@@ -1,11 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { BaseSchema } from '~/modules/shared/base/base.schema';
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators';
 
-export type BoardDocument = HydratedDocument<Column>;
+export type ColumnDocument = HydratedDocument<Column>;
 
 @Schema({ timestamps: true })
-export class Column {
+export class Column extends BaseSchema {
   @Prop({
     required: true,
     validate: {
@@ -34,9 +35,6 @@ export class Column {
     }
   })
   cardOrderIds: Types.ObjectId[];
-
-  @Prop({ default: false })
-  _destroy: boolean;
 }
 
 export const ColumnSchema = SchemaFactory.createForClass(Column);

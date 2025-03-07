@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '~/auth/auth.module';
+import { CardRepository } from '~/repositories/card.repository';
 import { ColumnModule } from '../column/column.module';
 import { CardController } from './card.controller';
 import { CardService } from './card.service';
@@ -13,7 +14,7 @@ import { Card, CardSchema } from './schemas/card.schema';
     forwardRef(() => ColumnModule)
   ],
   controllers: [CardController],
-  providers: [CardService],
-  exports: [CardService]
+  providers: [CardService, { provide: 'CardRepositoryInterface', useClass: CardRepository }],
+  exports: [CardService, MongooseModule]
 })
 export class CardModule {}
