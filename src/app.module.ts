@@ -1,10 +1,42 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from '~/auth/auth.module';
+import { JwtAuthGuard } from '~/auth/passport/jwt-auth.guard';
+import { BoardModule } from '~/modules/board/board.module';
+import { CardModule } from '~/modules/card/card.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ColumnModule } from './modules/column/column.module';
+import { UserModule } from './modules/user/user.module';
+import { InvitationsModule } from './modules/invitations/invitations.module';
 
 @Module({
-  imports: [],
+  imports: [
+    BoardModule,
+    ColumnModule,
+    CardModule,
+    UserModule,
+    AuthModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
+        dbName: configService.get<string>('MONGODB_NAME')
+      }),
+      inject: [ConfigService]
+    }),
+    InvitationsModule
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard
+    }
+  ]
 })
 export class AppModule {}
